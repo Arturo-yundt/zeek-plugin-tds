@@ -64,6 +64,10 @@ redef record connection += {
 const ports = {
     1433/tcp
     };
+
+# Additional ROC Plus ports supplied through the environment.
+    global tds_ports_str: string = getenv("ZEEK_TDS_PORTS");
+
 redef likely_server_ports += {
     ports
     };
@@ -85,6 +89,23 @@ event zeek_init() &priority=5 {
                         $path="tds_sql_batch",
                         $policy=log_policy_sql_batch]);
     Analyzer::register_for_ports(Analyzer::ANALYZER_TDS, ports);
+
+# Adding support for custom ports
+    if (tds_ports_str != "") {
+        local tds_custom_ports = split_string(tds_ports_str, /,/);
+        local tds_ports_tcp_custom: set[port] = {};
+        for (tds_port_idx in tds_custom_ports) {
+            local tds_port = to_port(tds_custom_ports[tds_port_idx]);
+            local tds_prot = get_port_transport_proto(tds_port);
+            if (tds_prot == tcp) {
+                add tds_ports_tcp_custom[tds_port];
+                }
+            }
+        if (|tds_ports_tcp_custom| > 0) {
+            Analyzer::register_for_ports(Analyzer::ANALYZER_TDS, tds_ports_tcp_custom);
+            }
+        }
+
     }
 
 ##! general tds header
@@ -221,3 +242,4 @@ event connection_state_remove(c: connection) &priority=-5 {
         delete c$tds;
         }
     }
+
