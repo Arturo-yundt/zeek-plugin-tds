@@ -65,7 +65,7 @@ const ports = {
     1433/tcp
     };
 
-# Additional ROC Plus ports supplied through the environment.
+# Additional TDS ports supplied through the environment.
     global tds_ports_str: string = getenv("ZEEK_TDS_PORTS");
 
 redef likely_server_ports += {
